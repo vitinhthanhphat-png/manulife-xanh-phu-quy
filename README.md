@@ -60,6 +60,9 @@ Tỷ suất đầu tư giả định (9%/năm và 1.3%/năm) không được Man
 
 ## 🔄 Theo dõi thay đổi (Changelog)
 
+### v2.2.1: OTA Updates via GitHub (March 2026)
+- **[Tính năng mới]** Tích hợp tính năng cập nhật tự động (OTA) qua GitHub, cho phép User tải bản mới trực tiếp trong khu vực Plugins (WP Admin).
+
 ### v2.2.0: Admin Settings & Mobile UX
 - **[Tính năng mới]** Thêm trang cài đặt (Settings Panel) trong WP Admin.
 - **[Tính năng mới]** Cho phép upload Avatar và Logo Tùy chỉnh trực tiếp từ Media Library.
