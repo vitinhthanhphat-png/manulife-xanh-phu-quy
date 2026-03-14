@@ -1,9 +1,9 @@
-<?php
+﻿<?php
 /**
  * Plugin Name: Hung Thinh Bar Chart - Xanh Phu Quy
  * Plugin URI:  https://techsharevn.com
  * Description: Biểu đồ cột tương tác + Kế hoạch tài chính của Quỹ Hưng Thịnh (Sản phẩm Xanh Phú Quý - Manulife). Powered by Techshare VN.
- * Version:     2.2.1
+ * Version:     2.3.0
  * Author:      Trần Vĩ Thành — Techshare VN
  * Author URI:  https://techsharevn.com
  * License:     GPL-2.0-or-later
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HTHBC_VERSION', '2.2.1' );
+define( 'HTHBC_VERSION', '2.3.0' );
 define( 'HTHBC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HTHBC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -345,6 +345,24 @@ function hthbc_settings_page() {
 						</tr>
 					</table>
 				</div>
+<div class="hthbc-table-legend">
+<div class="hthbc-tl-item">
+<span class="hthbc-tl-badge hthbc-tl-green">GTTK (Tỷ suất 9%)</span>
+<span class="hthbc-tl-desc">Giá trị tích lũy dự kiến theo kịch bản tỷ suất đầu tư cao (9%/năm)</span>
+</div>
+<div class="hthbc-tl-item">
+<span class="hthbc-tl-badge hthbc-tl-amber">GTTK (Tỷ suất 1.3%)</span>
+<span class="hthbc-tl-desc">Giá trị tích lũy dự kiến theo kịch bản tỷ suất đầu tư thấp (1.3%/năm)</span>
+</div>
+<div class="hthbc-tl-item">
+<span class="hthbc-tl-badge hthbc-tl-blue">Có thể rút (9%)</span>
+<span class="hthbc-tl-desc">Số tiền thực tế rút được sau khi trừ phí chấm dứt hợp đồng (kịch bản 9%)</span>
+</div>
+<div class="hthbc-tl-item">
+<span class="hthbc-tl-badge hthbc-tl-red">Hết quỹ</span>
+<span class="hthbc-tl-desc">Tài khoản đã cạn kiệt  xảy ra khi rút 10%/năm kết hợp lãi suất thấp hơn phí quản lý quỹ (2.5%/năm)</span>
+</div>
+</div>
 			</div>
 
 			<div class="hthbc-shortcode-box">
@@ -527,10 +545,52 @@ function hthbc_render_shortcode( $atts ) {
 				</div>
 				<p class="hthbc-narrative" id="hthbc-narrative"></p>
 			</div>
-
+<!-- Asset Type Legend -->
+<div class="hthbc-asset-legend">
+<div class="hthbc-al-item">
+<div>
+<span class="hthbc-al-name">🟢 Cổ phiếu</span>
+<span class="hthbc-al-desc">Tài sản tăng trưởng cao — đầu tư vào cổ phần doanh nghiệp. Tiềm năng sinh lời lớn nhưng biến động theo thị trường. Chiếm tỷ trọng cao khi bạn còn nhiều năm đến tuổi hưu.</span>
+</div>
+</div>
+<div class="hthbc-al-item">
+<div>
+<span class="hthbc-al-name">🟠 Trái phiếu / CCLS</span>
+<span class="hthbc-al-desc">Tài sản bảo toàn vốn — bao gồm trái phiếu Chính phủ, doanh nghiệp và CCLS (Chứng chỉ lưu ký sung). Lợi suất ổn định, rủi ro thấp hơn cổ phiếu. Tăng dần khi gần tuổi hưu.</span>
+</div>
+</div>
+<div class="hthbc-al-item">
+<div>
+<span class="hthbc-al-name">⚫ Thị trường tiền tệ</span>
+<span class="hthbc-al-desc">Tài sản thanh khoản cao nhất — tiền gửi ngân hàng, tín phiếu kho bạc, công cụ thị trường tiền tệ ngắn hạn. Rủi ro thấp nhất, đảm bảo thanh khoản khi cần rút tiền.</span>
+</div>
+</div>
+</div>
 			<div class="hthbc-disclaimer">
 				<p>Lưu ý: Biểu đồ cột minh họa dựa trên giới hạn tỷ lệ phân bổ tài sản đầu tư tối đa của Quỹ Hưng Thịnh. Tỷ trọng đầu tư thực tế sẽ được chuyên gia Manulife linh hoạt tự động điều chỉnh hàng năm theo tình hình thị trường nhằm đảm bảo mục tiêu tích lũy hưu trí, nhưng cam kết không vượt quá giới hạn rủi ro tại biểu đồ này.</p>
 			</div>
+<!-- Fund Type Legend -->
+<div class="hthbc-fund-legend" style="margin-top:18px">
+<div class="hthbc-fl-title"> Giải thích 3 loại Quỹ Hưng Thịnh</div>
+<div class="hthbc-fl-grid">
+<div class="hthbc-fl-item hthbc-fl-2035">
+<div class="hthbc-fl-name">Quỹ Hưng Thịnh 2035</div>
+<div class="hthbc-fl-badge">Nghỉ hưu ~2035</div>
+<div class="hthbc-fl-desc">Dành cho khách hàng <strong>gần tuổi hưu (dưới 10 năm)</strong>. Danh mục đang ưu tiên <strong>bảo toàn vốn</strong>  tỷ lệ trái phiếu/tiền tệ cao, cổ phiếu thấp để hạn chế rủi ro.</div>
+</div>
+<div class="hthbc-fl-item hthbc-fl-2040">
+<div class="hthbc-fl-name">Quỹ Hưng Thịnh 2040</div>
+<div class="hthbc-fl-badge">Nghỉ hưu ~2040</div>
+<div class="hthbc-fl-desc">Dành cho khách hàng <strong>trung hạn (1015 năm)</strong>. Cân bằng giữa <strong>tăng trưởng và bảo vệ</strong>  tỷ lệ cổ phiếu và trái phiếu tương đương nhau.</div>
+</div>
+<div class="hthbc-fl-item hthbc-fl-2045">
+<div class="hthbc-fl-name">Quỹ Hưng Thịnh 2045</div>
+<div class="hthbc-fl-badge">Nghỉ hưu ~2045</div>
+<div class="hthbc-fl-desc">Dành cho khách hàng <strong>dài hạn (trên 15 năm)</strong>. Hiện ưu tiên <strong>tăng trưởng mạnh</strong>  tỷ lệ cổ phiếu cao nhất, quỹ sẽ tự động giảm dần khi đến gần năm 2045.</div>
+</div>
+</div>
+<div class="hthbc-fl-note"> Quỹ mục tiêu tự động điều chỉnh: Càng gần năm nghỉ hưu, tỷ trọng cổ phiếu càng giảm để bảo toàn tài sản tích lũy.</div>
+</div>
 		</div>
 
 		<!-- TAB 2: Financial Planner -->
@@ -538,6 +598,11 @@ function hthbc_render_shortcode( $atts ) {
 			<div class="hthbc-form-card">
 				<h3 class="hthbc-form-title">Mô phỏng Tích lũy Hưu trí</h3>
 				<p class="hthbc-form-subtitle">Xem lợi ích dự kiến dựa trên phí đóng và thời hạn của bạn</p>
+				<div class="hthbc-fund-hint-wrap" id="hthbc-fund-hint-wrap">
+					<span class="hthbc-fund-hint-icon">🏦</span>
+					<span id="hthbc-fund-hint">Quỹ 2045  khuyến nghị đóng 15 năm</span>
+					<span class="hthbc-fund-hint-sub">(dựa trên quỹ bạn đang xem ở Tab Phân bổ)</span>
+				</div>
 				<div class="hthbc-fin-inputs">
 					<div class="hthbc-field-group">
 						<label class="hthbc-label" for="hthbc-premium-select">Phí đóng hàng năm</label>
@@ -571,6 +636,18 @@ function hthbc_render_shortcode( $atts ) {
 						<div class="hthbc-summary-label">Thưởng Tri Ân dự kiến</div>
 						<div class="hthbc-summary-value" id="hthbc-loyalty-bonus">Cuối Năm 20</div>
 					</div>
+				</div>
+			</div>
+
+			<!-- Withdrawal Simulation Toggle -->
+			<div class="hthbc-withdrawal-toggle">
+				<label class="hthbc-toggle-label" for="hthbc-withdrawal-toggle">
+					<input type="checkbox" id="hthbc-withdrawal-toggle">
+					<span class="hthbc-toggle-switch"></span>
+					Mô phỏng rút 10%/năm từ Năm thứ 11
+				</label>
+				<div class="hthbc-withdrawal-info" id="hthbc-withdrawal-info" style="display:none">
+					Số tiền rút mỗi năm: <strong id="hthbc-annual-withdrawal"></strong>
 				</div>
 			</div>
 
@@ -632,10 +709,142 @@ function hthbc_render_shortcode( $atts ) {
 						<tbody id="hthbc-fin-tbody"></tbody>
 					</table>
 				</div>
+<div class="hthbc-table-legend">
+<div class="hthbc-tl-item">
+<span class="hthbc-tl-badge hthbc-tl-green">GTTK (Tỷ suất 9%)</span>
+<span class="hthbc-tl-desc">Giá trị tích lũy dự kiến theo kịch bản tỷ suất đầu tư cao (9%/năm)</span>
+</div>
+<div class="hthbc-tl-item">
+<span class="hthbc-tl-badge hthbc-tl-amber">GTTK (Tỷ suất 1.3%)</span>
+<span class="hthbc-tl-desc">Giá trị tích lũy dự kiến theo kịch bản tỷ suất đầu tư thấp (1.3%/năm)</span>
+</div>
+<div class="hthbc-tl-item">
+<span class="hthbc-tl-badge hthbc-tl-blue">Có thể rút (9%)</span>
+<span class="hthbc-tl-desc">Số tiền thực tế rút được sau khi trừ phí chấm dứt hợp đồng (kịch bản 9%)</span>
+</div>
+<div class="hthbc-tl-item">
+<span class="hthbc-tl-badge hthbc-tl-red">Hết quỹ</span>
+<span class="hthbc-tl-desc">Tài khoản đã cạn kiệt  xảy ra khi rút 10%/năm kết hợp lãi suất thấp hơn phí quản lý quỹ (2.5%/năm)</span>
+</div>
+</div>
+			</div>
+			<!-- Rate Context Callout -->
+			<div class="hthbc-rate-callout">
+				<div class="hthbc-rc-icon">💡</div>
+				<div class="hthbc-rc-body">
+					<strong>Tại sao có 2 kịch bản tỷ suất?</strong>
+					<p>Tỷ suất <strong>9%/năm</strong> phản ánh giai đoạn quỹ phân bổ nhiều cổ phiếu (tăng trưởng cao).</p>
+					<p>Tỷ suất <strong>1.3%/năm</strong> phản ánh giai đoạn gần nghỉ hưu  quỹ chuyển sang trái phiếu và tiền tệ để bảo toàn vốn.</p>
+					<a class="hthbc-rc-link" id="hthbc-goto-tab1" href="#">📊 Xem phân bổ tài sản của bạn theo từng năm →</a>
+				</div>
 			</div>
 
 			<div class="hthbc-disclaimer">
 				<p>Lưu ý: Các con số trên là minh họa dựa trên tỷ suất đầu tư giả định (9%/năm cao và 1,3%/năm thấp). Kết quả thực tế phụ thuộc vào hiệu quả đầu tư của Quỹ Hưng Thịnh và không được Manulife đảm bảo. Phí quản lý quỹ tối đa 2,5%/năm đã được tính vào mô phỏng.</p>
+			</div>
+		</div>
+
+		<!-- SECTION 3: Historical Fund Performance -->
+		<div class="hthbc-history-section" id="hthbc-history-section">
+			<div class="hthbc-history-header">
+				<h3 class="hthbc-history-title">📈 Lịch sử Lợi nhuận Thực tế Các Quỹ</h3>
+				<p class="hthbc-history-subtitle">Dữ liệu lợi nhuận hàng năm của các Quỹ Liên Kết Đơn Vị Manulife VN (là các quỹ thành phần mà Quỹ Hưng Thịnh đầu tư vào)</p>
+			</div>
+
+			<div class="hthbc-history-toggles">
+				<button class="hthbc-hist-btn active" data-fund="growth">🟢 Tăng Trưởng <span class="hthbc-hist-avg">TB 10 năm: 7.0%</span></button>
+				<button class="hthbc-hist-btn active" data-fund="develop">🔵 Phát Triển <span class="hthbc-hist-avg">TB 10 năm: 7.0%</span></button>
+				<button class="hthbc-hist-btn active" data-fund="balance">🟠 Cân Bằng <span class="hthbc-hist-avg">TB 10 năm: 7.0%</span></button>
+				<button class="hthbc-hist-btn active" data-fund="stable">⚫ Ổn Định</button>
+			</div>
+
+			<!-- Fund Type + Relationship Explanation -->
+			<details class="hthbc-fund-explain">
+				<summary class="hthbc-fe-summary">📖 Giải thích các loại quỹ &amp; mối liên hệ với Quỹ Hưng Thịnh</summary>
+				<div class="hthbc-fe-body">
+
+					<!-- 4 fund descriptions -->
+					<div class="hthbc-fe-grid">
+						<div class="hthbc-fe-item hthbc-fe-growth">
+							<span class="hthbc-fe-icon">🟢</span>
+							<div>
+								<strong>Quỹ Tăng Trưởng</strong>
+								<p>Đầu tư <strong>80–100% vào cổ phiếu</strong>. Mục tiêu tối đa hóa lợi nhuận dài hạn. Biến động cao — phù hợp giai đoạn nhiều năm trước nghỉ hưu.</p>
+							</div>
+						</div>
+						<div class="hthbc-fe-item hthbc-fe-develop">
+							<span class="hthbc-fe-icon">🔵</span>
+							<div>
+								<strong>Quỹ Phát Triển</strong>
+								<p>Đầu tư <strong>60–100% cổ phiếu</strong>, phần còn lại trái phiếu và tiền mặt. Cân bằng giữa tăng trưởng và ổn định hơn Quỹ Tăng Trưởng.</p>
+							</div>
+						</div>
+						<div class="hthbc-fe-item hthbc-fe-balance">
+							<span class="hthbc-fe-icon">🟠</span>
+							<div>
+								<strong>Quỹ Cân Bằng</strong>
+								<p>Cổ phiếu <strong>10–80%</strong>, trái phiếu <strong>20–90%</strong>. Giảm thiểu rủi ro so với quỹ cổ phiếu thuần — phù hợp trung hạn gần nghỉ hưu.</p>
+							</div>
+						</div>
+						<div class="hthbc-fe-item hthbc-fe-stable">
+							<span class="hthbc-fe-icon">⚫</span>
+							<div>
+								<strong>Quỹ Ổn Định</strong>
+								<p>Tập trung <strong>80–100% trái phiếu &amp; tiền gửi</strong>. Bảo vệ vốn, thu nhập cố định — ưu tiên khi sắp đến năm nghỉ hưu.</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Glide path relationship -->
+					<div class="hthbc-fe-relation">
+						<div class="hthbc-fe-rel-title">🔗 Mối liên hệ trực tiếp với Quỹ Hưng Thịnh 2035/2040/2045</div>
+						<p>Quỹ Hưng Thịnh là <strong>Quỹ Mục Tiêu (Target-Date Fund)</strong> — không đầu tư cố định mà tự động phân bổ tài sản giữa các lớp tương ứng với 4 quỹ trên theo cơ chế <em>Glide Path</em>:</p>
+						<div class="hthbc-fe-glide">
+							<div class="hthbc-fe-glide-item">
+								<div class="hthbc-fe-glide-phase hthbc-glide-early">Xa năm nghỉ hưu</div>
+								<div class="hthbc-fe-glide-desc">Ưu tiên Quỹ <strong>Tăng Trưởng + Phát Triển</strong> — tận dụng tăng trưởng cổ phiếu dài hạn &amp; lãi suất kép</div>
+							</div>
+							<div class="hthbc-fe-glide-arrow">→</div>
+							<div class="hthbc-fe-glide-item">
+								<div class="hthbc-fe-glide-phase hthbc-glide-late">Gần năm nghỉ hưu</div>
+								<div class="hthbc-fe-glide-desc">Tự động dịch chuyển sang Quỹ <strong>Cân Bằng + Ổn Định</strong> — bảo toàn thành quả tích lũy, giảm rủi ro</div>
+							</div>
+						</div>
+						<p class="hthbc-fe-note">💡 Đây chính là lý do biểu đồ Tab "Phân bổ Tài sản" cho thấy tỷ lệ cổ phiếu giảm dần và trái phiếu tăng dần khi kéo thanh thời gian về gần năm mục tiêu.</p>
+					</div>
+
+				</div>
+			</details>
+
+			<div class="hthbc-history-chart-wrap">
+				<canvas id="hthbc-history-canvas"></canvas>
+			</div>
+
+			<div class="hthbc-history-stats">
+				<div class="hthbc-hstat hthbc-hstat-growth">
+					<div class="hthbc-hstat-name">Tăng Trưởng</div>
+					<div class="hthbc-hstat-best">🏆 Tốt nhất: <strong>2021 +28.5%</strong></div>
+					<div class="hthbc-hstat-worst">⚠️ Khó nhất: <strong>2022 -29.5%</strong></div>
+				</div>
+				<div class="hthbc-hstat hthbc-hstat-develop">
+					<div class="hthbc-hstat-name">Phát Triển</div>
+					<div class="hthbc-hstat-best">🏆 Tốt nhất: <strong>2021 +25.1%</strong></div>
+					<div class="hthbc-hstat-worst">⚠️ Khó nhất: <strong>2022 -24.1%</strong></div>
+				</div>
+				<div class="hthbc-hstat hthbc-hstat-balance">
+					<div class="hthbc-hstat-name">Cân Bằng</div>
+					<div class="hthbc-hstat-best">🏆 Tốt nhất: <strong>2021 +18.8%</strong></div>
+					<div class="hthbc-hstat-worst">⚠️ Khó nhất: <strong>2022 -16.9%</strong></div>
+				</div>
+				<div class="hthbc-hstat hthbc-hstat-stable">
+					<div class="hthbc-hstat-name">Ổn Định</div>
+					<div class="hthbc-hstat-best">🏆 Tốt nhất: <strong>2021 +9.9%</strong></div>
+					<div class="hthbc-hstat-worst">⚠️ Khó nhất: <strong>2022 -6.7%</strong></div>
+				</div>
+			</div>
+
+			<div class="hthbc-history-disclaimer">
+				<p>⚖️ <em>Lưu ý: Kết quả đầu tư của các Quỹ Liên Kết Đơn Vị trong quá khứ chỉ nhằm mục đích tham khảo và không phản ánh kết quả hoạt động đầu tư trong tương lai của các Quỹ. Khách hàng được hưởng toàn bộ kết quả đầu tư và chịu mọi rủi ro trong đầu tư.</em></p>
 			</div>
 		</div>
 

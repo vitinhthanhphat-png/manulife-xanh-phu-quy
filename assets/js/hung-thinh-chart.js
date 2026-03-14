@@ -12,6 +12,7 @@
         TabController.init();
         AllocationChart.init();
         FinancialPlanner.init();
+        HistoryChart.init();
     });
 
     /* ═══════════════════════════════════════════════════
@@ -52,6 +53,13 @@
             stocks: { bar: '#00843D', hover: '#005c2b' },
             bonds:  { bar: '#F5A623', hover: '#c07d10' },
             money:  { bar: '#9B9B9B', hover: '#6b6b6b' }
+        },
+
+        // Fund → recommended pay-years hint for Tab 2
+        FUND_HINT: {
+            '2035': { years: 5,  label: 'Quỹ 2035 — khuyến nghị đóng 5 năm' },
+            '2040': { years: 10, label: 'Quỹ 2040 — khuyến nghị đóng 10 năm' },
+            '2045': { years: 15, label: 'Quỹ 2045 — khuyến nghị đóng 15 năm' },
         },
 
         init: function () {
@@ -106,6 +114,15 @@
                 self.currentYear = parseInt(this.value, 10);
                 self.update();
             });
+            // Tab cross-link: click callout link → switch to Tab 1
+            var rcLink = document.getElementById('hthbc-goto-tab1');
+            if (rcLink) {
+                rcLink.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    TabController.switchTo('allocation');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
         },
 
         updateTimeSliderRange: function () {
@@ -210,6 +227,15 @@
                 ? '📊 Hiện tại (năm ' + this.currentYear + '), lúc bạn ' + displayAge + ' tuổi, trần rủi ro cổ phiếu đang ở mức <strong>' + alloc.s + '%</strong> — phù hợp cho tích lũy dài hạn.'
                 : '📊 Năm ' + this.currentYear + ', lúc bạn ' + displayAge + ' tuổi, trần rủi ro cổ phiếu ' + trend + ' còn <strong>' + alloc.s + '%</strong>, tỷ lệ trái phiếu/CCLS tăng lên <strong>' + alloc.b + '%</strong> — ưu tiên sự an toàn và bảo toàn vốn.';
             this.el.narrative.innerHTML = narrative;
+            this.updateFundHint();
+        },
+
+        updateFundHint: function () {
+            var hint = this.FUND_HINT[this.currentFund];
+            var el   = document.getElementById('hthbc-fund-hint');
+            if (el && hint) {
+                el.textContent = hint.label;
+            }
         }
     };
 
@@ -234,11 +260,12 @@
         PROJECTION_YEARS: 25,
 
         // State
-        premium:    250000000,
-        payYears:   10,
-        finChartHigh: null,
-        finChartLow:  null,
-        lineChart:    null,
+        premium:       250000000,
+        payYears:      10,
+        withdrawalMode: false,
+        finChartHigh:  null,
+        finChartLow:   null,
+        lineChart:     null,
 
         init: function () {
             this.bindElements();
@@ -248,13 +275,16 @@
 
         bindElements: function () {
             this.el = {
-                premiumSelect:   document.getElementById('hthbc-premium-select'),
-                payYearsSelect:  document.getElementById('hthbc-payyears-select'),
-                totalPremium:    document.getElementById('hthbc-total-premium'),
+                premiumSelect:    document.getElementById('hthbc-premium-select'),
+                payYearsSelect:   document.getElementById('hthbc-payyears-select'),
+                totalPremium:     document.getElementById('hthbc-total-premium'),
                 freeWithdrawYear: document.getElementById('hthbc-free-withdraw-year'),
-                loyaltyBonus:    document.getElementById('hthbc-loyalty-bonus'),
-                finCanvas:       document.getElementById('hthbc-fin-canvas'),
-                finTbody:        document.getElementById('hthbc-fin-tbody'),
+                loyaltyBonus:     document.getElementById('hthbc-loyalty-bonus'),
+                finCanvas:        document.getElementById('hthbc-fin-canvas'),
+                finTbody:         document.getElementById('hthbc-fin-tbody'),
+                withdrawToggle:   document.getElementById('hthbc-withdrawal-toggle'),
+                withdrawInfo:     document.getElementById('hthbc-withdrawal-info'),
+                annualWithdrawal: document.getElementById('hthbc-annual-withdrawal'),
             };
         },
 
@@ -268,14 +298,20 @@
                 self.payYears = parseInt(this.value, 10);
                 self.updateAll();
             });
+            if (self.el.withdrawToggle) {
+                self.el.withdrawToggle.addEventListener('change', function () {
+                    self.withdrawalMode = this.checked;
+                    self.updateAll();
+                });
+            }
         },
 
         /* ── Core financial projection engine ─────────── */
         /**
          * Projects account value at end of given year.
-         * @param {number} premium   Annual premium in VND
-         * @param {number} payYears  Years customer pays premium
-         * @param {number} rate      Annual investment rate (0.09 or 0.013)
+         * @param {number} premium     Annual premium in VND
+         * @param {number} payYears    Years customer pays premium
+         * @param {number} rate        Annual investment rate (0.09 or 0.013)
          * @param {number} targetYear  Year to project to (1-based)
          * @returns {number} account value in VND
          */
@@ -311,6 +347,44 @@
             return Math.round(accountValue);
         },
 
+        /**
+         * Projects account value WITH annual withdrawal from Year 11.
+         * Withdrawal = premium × min(payYears, 10) × 10%, deducted each year 11+.
+         * If account balance < withdrawal amount, drains remaining balance.
+         */
+        projectWithWithdrawal: function (premium, payYears, rate, targetYear) {
+            var self = this;
+            var netRate = rate - self.FUND_MGMT_FEE;
+            var accountValue = 0;
+            var loyaltyAccum = 0;
+            var withdrawAmount = premium * Math.min(payYears, 10) * 0.10;
+
+            for (var yr = 1; yr <= targetYear; yr++) {
+                if (yr <= payYears) {
+                    var chargeIdx  = Math.min(yr - 1, self.INITIAL_CHARGE_RATES.length - 1);
+                    var chargeRate = self.INITIAL_CHARGE_RATES[chargeIdx];
+                    accountValue  += premium * (1 - chargeRate);
+                    loyaltyAccum  += premium * chargeRate;
+                }
+                accountValue = accountValue * (1 + netRate);
+                loyaltyAccum = loyaltyAccum * (1 + netRate);
+                accountValue -= self.POLICY_MGMT_FEE;
+
+                // Annual withdrawal from Year 11 onwards
+                if (yr >= 11) {
+                    accountValue -= Math.min(withdrawAmount, accountValue);
+                }
+
+                accountValue = Math.max(0, accountValue);
+            }
+
+            if (targetYear >= 20) {
+                accountValue += loyaltyAccum;
+            }
+
+            return Math.round(accountValue);
+        },
+
         getSurrenderCharge: function (year) {
             return this.SURRENDER_CHARGES[year] || 0;
         },
@@ -339,37 +413,59 @@
             var p    = self.premium;
             var py   = self.payYears;
             var yrs  = self.PROJECTION_YEARS;
+            var wm   = self.withdrawalMode;
 
             // Summary cards
-            self.el.totalPremium.textContent    = self.fmtVND(p * py) + 'đ';
+            self.el.totalPremium.textContent     = self.fmtVND(p * py);
             self.el.freeWithdrawYear.textContent = 'Từ Năm thứ 6';
             self.el.loyaltyBonus.textContent     = 'Cuối Năm 20';
+
+            // Update withdrawal info banner
+            if (self.el.withdrawInfo) {
+                if (wm) {
+                    var annualAmt = p * Math.min(py, 10) * 0.10;
+                    self.el.withdrawInfo.style.display = 'block';
+                    if (self.el.annualWithdrawal) {
+                        self.el.annualWithdrawal.textContent = self.fmtVND(annualAmt) + '/năm';
+                    }
+                } else {
+                    self.el.withdrawInfo.style.display = 'none';
+                }
+            }
 
             // Build projection data arrays
             var labelsArr = [], highArr = [], lowArr = [];
             for (var yr = 1; yr <= yrs; yr++) {
                 labelsArr.push('Năm ' + yr);
-                highArr.push(Math.round(self.project(p, py, self.HIGH_RATE, yr) / 1e6));
-                lowArr.push(Math.round(self.project(p, py, self.LOW_RATE,  yr) / 1e6));
+                if (wm) {
+                    highArr.push(Math.round(self.projectWithWithdrawal(p, py, self.HIGH_RATE, yr) / 1e6));
+                    lowArr.push(Math.round(self.projectWithWithdrawal(p, py, self.LOW_RATE,  yr) / 1e6));
+                } else {
+                    highArr.push(Math.round(self.project(p, py, self.HIGH_RATE, yr) / 1e6));
+                    lowArr.push(Math.round(self.project(p, py, self.LOW_RATE,  yr) / 1e6));
+                }
             }
 
             // Update or create Line Chart
-            self.updateLineChart(labelsArr, highArr, lowArr, py);
+            self.updateLineChart(labelsArr, highArr, lowArr, py, wm);
 
             // Build table
-            self.buildTable(p, py, yrs);
+            self.buildTable(p, py, yrs, wm);
         },
 
-        updateLineChart: function (labels, highData, lowData, payYears) {
+        updateLineChart: function (labels, highData, lowData, payYears, withdrawalMode) {
             var self = this;
             var ctx  = self.el.finCanvas.getContext('2d');
 
-            var payStopAnnotation = payYears;
+            var highLabel = withdrawalMode ? 'Sau rút 10%/năm (Tỷ suất 9%)' : 'Tỷ suất Cao (9%/năm)';
+            var lowLabel  = withdrawalMode ? 'Sau rút 10%/năm (Tỷ suất 1.3%)' : 'Tỷ suất Thấp (1.3%/năm)';
 
             if (self.lineChart) {
-                self.lineChart.data.labels              = labels;
-                self.lineChart.data.datasets[0].data    = highData;
-                self.lineChart.data.datasets[1].data    = lowData;
+                self.lineChart.data.labels                       = labels;
+                self.lineChart.data.datasets[0].data             = highData;
+                self.lineChart.data.datasets[0].label            = highLabel;
+                self.lineChart.data.datasets[1].data             = lowData;
+                self.lineChart.data.datasets[1].label            = lowLabel;
                 self.lineChart.update();
                 return;
             }
@@ -380,7 +476,7 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Tỷ suất Cao (9%/năm)',
+                            label: highLabel,
                             data:  highData,
                             borderColor:     '#00843D',
                             backgroundColor: 'rgba(0,132,61,0.10)',
@@ -392,7 +488,7 @@
                             fill: true,
                         },
                         {
-                            label: 'Tỷ suất Thấp (1.3%/năm)',
+                            label: lowLabel,
                             data:  lowData,
                             borderColor:      '#F5A623',
                             backgroundColor:  'rgba(245,166,35,0.08)',
@@ -454,37 +550,180 @@
             });
         },
 
-        buildTable: function (p, py, yrs) {
-            var self   = this;
-            var tbody  = self.el.finTbody;
-            var rows   = '';
+        buildTable: function (p, py, yrs, withdrawalMode) {
+            var self      = this;
+            var tbody     = self.el.finTbody;
+            var rows      = '';
             var totalPaid = 0;
-
             var milestones = { 3: true, 6: true, 20: true };
 
             for (var yr = 1; yr <= yrs; yr++) {
                 if (yr <= py) totalPaid += p;
-                var highVal = self.project(p, py, self.HIGH_RATE, yr);
-                var lowVal  = self.project(p, py, self.LOW_RATE,  yr);
-                var charge  = self.getSurrenderCharge(yr);
-                var withdrawHigh = self.getWithdrawable(highVal, yr);
-                var chargeStr = charge > 0 ? (charge * 100).toFixed(0) + '%' : '<span class="hthbc-td-free">0% ✓</span>';
-                var isMilestone = milestones[yr] ? ' hthbc-row-milestone' : '';
 
-                // Bonus note at year 20
-                var bonusNote = yr === 20 ? ' 🎁' : '';
+                var highVal, lowVal;
+                if (withdrawalMode) {
+                    highVal = self.projectWithWithdrawal(p, py, self.HIGH_RATE, yr);
+                    lowVal  = self.projectWithWithdrawal(p, py, self.LOW_RATE,  yr);
+                } else {
+                    highVal = self.project(p, py, self.HIGH_RATE, yr);
+                    lowVal  = self.project(p, py, self.LOW_RATE,  yr);
+                }
+
+                var charge      = self.getSurrenderCharge(yr);
+                var withdrawHigh = self.getWithdrawable(highVal, yr);
+                var chargeStr   = charge > 0
+                    ? (charge * 100).toFixed(0) + '%'
+                    : '<span class="hthbc-td-free">0% ✓</span>';
+                var isMilestone = milestones[yr] ? ' hthbc-row-milestone' : '';
+                var bonusNote   = yr === 20 ? ' 🎁' : '';
+                var wdNote      = (withdrawalMode && yr >= 11) ? ' 💸' : '';
+                // Helper: display value — show 'Hết quỹ' when 0 in withdrawal mode
+                var fmtCell = function (v, isWithdrawal) {
+                    if (v <= 0 && isWithdrawal) {
+                        return '<span class="hthbc-td-depleted" title="Quỹ cạn do rút 10%/năm + lãi thấp hơn phí quản lý">Hết quỹ</span>';
+                    }
+                    return self.fmtVND(v);
+                };
 
                 rows += '<tr class="' + isMilestone + '">'
-                    + '<td>' + yr + bonusNote + '</td>'
-                    + '<td>' + self.fmtVND(totalPaid) + 'đ</td>'
-                    + '<td class="hthbc-td-high">' + self.fmtVND(highVal) + 'đ</td>'
-                    + '<td class="hthbc-td-low">'  + self.fmtVND(lowVal)  + 'đ</td>'
+                    + '<td>' + yr + bonusNote + wdNote + '</td>'
+                    + '<td>' + self.fmtVND(totalPaid) + '</td>'
+                    + '<td class="hthbc-td-high">' + fmtCell(highVal, withdrawalMode) + '</td>'
+                    + '<td class="hthbc-td-low">'  + fmtCell(lowVal,  withdrawalMode) + '</td>'
                     + '<td>' + chargeStr + '</td>'
-                    + '<td class="hthbc-td-high">' + self.fmtVND(withdrawHigh) + 'đ</td>'
+                    + '<td class="hthbc-td-high">' + fmtCell(withdrawHigh, withdrawalMode) + '</td>'
                     + '</tr>';
             }
 
             tbody.innerHTML = rows;
+        }
+    };
+
+    /* ═══════════════════════════════════════════════════
+       SECTION 3: HISTORICAL FUND PERFORMANCE CHART
+    ═══════════════════════════════════════════════════ */
+    var HistoryChart = {
+        LABELS: ['2020', '2021', '2022', '2023', '2024'],
+
+        FUNDS: {
+            growth:  { label: 'Tăng Trưởng', color: '#00843D', data: [9.7,  28.5, -29.5,  9.9, 14.1] },
+            develop: { label: 'Phát Triển',  color: '#1E88E5', data: [11.7, 25.1, -24.1,  9.6, 12.1] },
+            balance: { label: 'Cân Bằng',    color: '#F5A623', data: [13.5, 18.8, -16.9,  9.4,  9.3] },
+            stable:  { label: 'Ổn Định',     color: '#9B9B9B', data: [ 5.5,  9.9,  -6.7,  9.6,  6.5] },
+        },
+
+        chart:        null,
+        activeFunds:  { growth: true, develop: true, balance: true, stable: true },
+
+        init: function () {
+            var canvas = document.getElementById('hthbc-history-canvas');
+            if (!canvas) return;
+            this.buildChart(canvas);
+            this.bindToggleButtons();
+        },
+
+        buildDatasets: function () {
+            var self = this;
+            return Object.keys(self.FUNDS).filter(function (k) {
+                return self.activeFunds[k];
+            }).map(function (k) {
+                var f = self.FUNDS[k];
+                return {
+                    label:           f.label,
+                    data:            f.data,
+                    borderColor:     f.color,
+                    backgroundColor: f.color + '22',
+                    borderWidth: 2.5,
+                    pointRadius:      5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: f.color,
+                    tension: 0.35,
+                    fill: false,
+                };
+            });
+        },
+
+        buildChart: function (canvas) {
+            var self = this;
+            var ctx  = canvas.getContext('2d');
+            self.chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels:   self.LABELS,
+                    datasets: self.buildDatasets(),
+                },
+                options: {
+                    responsive:          true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 350, easing: 'easeInOutQuart' },
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function (v) { return v + '%'; },
+                                color: '#6b7280',
+                                font: { size: 11, family: "'Inter',sans-serif" }
+                            },
+                            grid: { color: 'rgba(0,0,0,0.07)' },
+                            border: { display: false }
+                        },
+                        x: {
+                            ticks: { color: '#374151', font: { size: 12, weight: '600', family: "'Inter',sans-serif" } },
+                            grid: { display: false },
+                            border: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.80)',
+                            padding: 10, cornerRadius: 8,
+                            callbacks: {
+                                label: function (ctx) {
+                                    var v = ctx.parsed.y;
+                                    return ' ' + ctx.dataset.label + ': ' + (v > 0 ? '+' : '') + v + '%';
+                                }
+                            }
+                        },
+                        datalabels: { display: false },
+                        // Zero reference line
+                        annotation: undefined
+                    }
+                },
+                plugins: [{
+                    id: 'zeroLine',
+                    afterDraw: function (chart) {
+                        var yScale = chart.scales.y;
+                        var xScale = chart.scales.x;
+                        if (!yScale || !xScale) return;
+                        var y = yScale.getPixelForValue(0);
+                        var ctx2 = chart.ctx;
+                        ctx2.save();
+                        ctx2.beginPath();
+                        ctx2.moveTo(xScale.left, y);
+                        ctx2.lineTo(xScale.right, y);
+                        ctx2.strokeStyle = 'rgba(220,38,38,0.4)';
+                        ctx2.lineWidth   = 1.5;
+                        ctx2.setLineDash([5, 4]);
+                        ctx2.stroke();
+                        ctx2.restore();
+                    }
+                }]
+            });
+        },
+
+        bindToggleButtons: function () {
+            var self = this;
+            var btns = document.querySelectorAll('.hthbc-hist-btn');
+            btns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var fund = this.dataset.fund;
+                    self.activeFunds[fund] = !self.activeFunds[fund];
+                    this.classList.toggle('active', self.activeFunds[fund]);
+                    self.chart.data.datasets = self.buildDatasets();
+                    self.chart.update();
+                });
+            });
         }
     };
 
