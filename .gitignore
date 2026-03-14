@@ -1,0 +1,23 @@
+# WordPress
+wp-config.php
+wp-content/uploads/
+wp-content/cache/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Yeu Cau folder (internal docs, not for distribution)
+Yeu Cau/
+
+# Node (if any future build tools)
+node_modules/
+npm-debug.log
