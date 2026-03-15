@@ -1,5 +1,5 @@
 /**
- * Hung Thinh Bar Chart v2 — Manulife Xanh Phu Quy
+ * Hung Thinh Bar Chart v2.5.0 — Manulife Xanh Phu Quy
  * Tab 1: Allocation Bar Chart
  * Tab 2: Financial Projection Engine
  */
@@ -259,6 +259,10 @@
 
         PROJECTION_YEARS: 25,
 
+        // Guaranteed interest rates for Loyalty Bonus (Thuong Tri An) by payment years
+        // Source: Manulife Xanh Phu Quy Terms & Conditions
+        LOYALTY_RATES: { 3: 0.025, 4: 0.025, 5: 0.025, 6: 0.030, 7: 0.035, 8: 0.040, 9: 0.045, 10: 0.050, 15: 0.050 },
+
         // State
         premium:       250000000,
         payYears:      10,
@@ -304,6 +308,8 @@
                     self.updateAll();
                 });
             }
+            // Smart Banner modal bindings
+            self.bindSmartBannerModals();
         },
 
         /* ── Core financial projection engine ─────────── */
@@ -419,6 +425,9 @@
             self.el.totalPremium.textContent     = self.fmtVND(p * py);
             self.el.freeWithdrawYear.textContent = 'Từ Năm thứ 6';
             self.el.loyaltyBonus.textContent     = 'Cuối Năm 20';
+
+            // Year 20 Package Card
+            self.updateYear20Package();
 
             // Update withdrawal info banner
             if (self.el.withdrawInfo) {
@@ -540,13 +549,188 @@
                             cornerRadius: 8,
                             callbacks: {
                                 label: function (ctx) {
-                                    return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('vi-VN') + ' triệu đ';
+                                    return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('vi-VN') + ' triệu';
                                 }
                             }
                         },
                         datalabels: { display: false }
                     }
                 }
+            });
+        },
+
+        /**
+         * Calculates the Loyalty Bonus (Thuong Tri An) to be paid at Year 20.
+         * The bonus = sum of initial charges (Phi Ban Dau) each year compounded
+         * at the guaranteed rate until Year 20.
+         */
+        calcLoyaltyBonus: function (premium, payYears) {
+            var self = this;
+            var effectiveYears = Math.min(payYears, 10);
+            var rate = self.LOYALTY_RATES[effectiveYears] || 0.050;
+            var total = 0;
+
+            for (var yr = 1; yr <= effectiveYears; yr++) {
+                var chargeIdx = Math.min(yr - 1, self.INITIAL_CHARGE_RATES.length - 1);
+                var initialCharge = premium * self.INITIAL_CHARGE_RATES[chargeIdx];
+                var yearsToGrow = 20 - yr;
+                total += initialCharge * Math.pow(1 + rate, yearsToGrow);
+            }
+
+            return Math.round(total);
+        },
+
+        /**
+         * Year 20 Package Card (Option D Enhanced).
+         * Shows total paid, GTTK at year 20 (both 9% and 1.3%),
+         * Loyalty Bonus added on top, ROI%, and reacts to withdrawal toggle.
+         */
+        updateYear20Package: function () {
+            var self = this;
+            var p    = self.premium;
+            var py   = self.payYears;
+            var wm   = self.withdrawalMode;
+            var YEAR = 20;
+
+            // Helper: safe getElementById
+            function el(id) { return document.getElementById(id); }
+            function set(id, val) { var e = el(id); if (e) e.textContent = val; }
+            function cls(id, add, cls) {
+                var e = el(id);
+                if (!e) return;
+                e.classList[add ? 'remove' : 'add']('hthbc-y20-hidden');
+            }
+
+            // --- Compute values ---
+            var totalPaid = p * py;
+            var bonus     = self.calcLoyaltyBonus(p, py);
+
+            var highInvest = wm
+                ? self.projectWithWithdrawal(p, py, self.HIGH_RATE, YEAR)
+                : self.project(p, py, self.HIGH_RATE, YEAR);
+            var lowInvest = wm
+                ? self.projectWithWithdrawal(p, py, self.LOW_RATE, YEAR)
+                : self.project(p, py, self.LOW_RATE, YEAR);
+
+            var highTotal = highInvest + bonus;
+            var lowTotal  = lowInvest  + bonus;
+
+            var annualWithdraw  = p * Math.min(py, 10) * 0.10;
+            var totalWithdrawn  = annualWithdraw * 10;
+
+            var highRoi = totalPaid > 0 ? Math.round((highTotal / totalPaid - 1) * 100) : 0;
+            var lowRoi  = totalPaid > 0 ? Math.round((lowTotal  / totalPaid - 1) * 100) : 0;
+
+            var effectiveYears = Math.min(py, 10);
+            var rate = self.LOYALTY_RATES[effectiveYears] || 0.050;
+
+            // --- Update DOM ---
+            set('hthbc-y20-total-paid', self.fmtVND(totalPaid));
+
+            // Mode badge + withdrawn row
+            cls('hthbc-y20-mode-badge',    wm);
+            cls('hthbc-y20-withdrawn-row', wm);
+            if (wm) {
+                set('hthbc-y20-total-withdrawn', '~' + self.fmtVND(totalWithdrawn));
+            }
+
+            // Thuong Tri An
+            var bonusFmt = '+' + self.fmtVND(bonus);
+            set('hthbc-y20-bonus',      bonusFmt);
+            set('hthbc-y20-low-bonus',  bonusFmt);
+            set('hthbc-y20-rate-badge', (rate * 100).toFixed(1) + '%/năm');
+
+            // Scenario: High (9%)
+            set('hthbc-y20-high-invest', self.fmtVND(highInvest));
+            set('hthbc-y20-high-total',  self.fmtVND(highTotal));
+            set('hthbc-y20-high-roi',    (highRoi >= 0 ? '+' : '') + highRoi + '% so với vốn đã đóng');
+
+            // Scenario: Low (1.3%)
+            set('hthbc-y20-low-invest', self.fmtVND(lowInvest));
+            set('hthbc-y20-low-total',  self.fmtVND(lowTotal));
+            set('hthbc-y20-low-roi',    (lowRoi >= 0 ? '+' : '') + lowRoi + '% so với vốn đã đóng');
+        },
+
+        /* Legacy: kept for backward compat, now superseded by updateYear20Package */
+        updateTriAnCalc: function () {
+            var self = this;
+            var effectiveYears = Math.min(self.payYears, 10);
+            var rate   = self.LOYALTY_RATES[effectiveYears] || 0.050;
+            var amount = self.calcLoyaltyBonus(self.premium, self.payYears);
+
+            var badge    = document.getElementById('hthbc-tac-rate-badge');
+            var amountEl = document.getElementById('hthbc-tac-amount');
+            var condEl   = document.getElementById('hthbc-tac-condition');
+
+            if (badge)    badge.textContent    = 'Lãi suất cam kết: ' + (rate * 100).toFixed(1) + '%/năm';
+            if (amountEl) amountEl.textContent = self.fmtVND(amount);
+            if (condEl)   condEl.textContent   = '(đóng đủ ' + effectiveYears + ' năm)';
+        },
+
+        /* Binds Smart Banner info buttons to open modal with contextual content */
+        bindSmartBannerModals: function () {
+            var overlay = document.getElementById('hthbc-modal-overlay');
+            var modal   = document.getElementById('hthbc-modal');
+            var content = document.getElementById('hthbc-modal-content');
+            var closeBtn = document.getElementById('hthbc-modal-close');
+
+            if (!overlay || !modal || !content) return;
+
+            var MODAL_CONTENT = {
+                guaranteed: '<span class="hthbc-modal-tag hthbc-modal-tag-green">🔒 CÓ CAM KẾT</span>'
+                    + '<h3>Thưởng Tri Ân — Lãi Suất Cam Kết</h3>'
+                    + '<p><strong>Tài Khoản Tri Ân</strong> là khoản Phí Ban Đầu bị khấu trừ từ phí bảo hiểm mỗi năm. Khoản tiền này được Manulife tích lũy và <strong>cam kết</strong> trả lại vào Năm hợp đồng thứ 20.</p>'
+                    + '<p>Mức lãi suất cam kết tăng dần theo số năm bạn đóng phí đầy đủ và đúng hạn trong 10 năm đầu:</p>'
+                    + '<table><thead><tr><th>Số năm đóng đầy đủ</th><th>Lãi suất cam kết</th></tr></thead>'
+                    + '<tbody>'
+                    + '<tr><td>3 – 5 năm</td><td><strong>2.5%/năm</strong></td></tr>'
+                    + '<tr><td>6 năm</td><td><strong>3.0%/năm</strong></td></tr>'
+                    + '<tr><td>7 năm</td><td><strong>3.5%/năm</strong></td></tr>'
+                    + '<tr><td>8 năm</td><td><strong>4.0%/năm</strong></td></tr>'
+                    + '<tr><td>9 năm</td><td><strong>4.5%/năm</strong></td></tr>'
+                    + '<tr><td>10 năm</td><td><strong>5.0%/năm</strong></td></tr>'
+                    + '</tbody></table>',
+
+                variable: '<span class="hthbc-modal-tag hthbc-modal-tag-amber">📈 KHÔNG CAM KẾT</span>'
+                    + '<h3>Tỷ Suất Đầu Tư — Không Đảm Bảo</h3>'
+                    + '<p>Dòng tiền thực tế được mang đi đầu tư vào các <strong>Quỹ Liên Kết Đơn Vị</strong> (Quỹ Hưng Thịnh, Tăng Trưởng, Tích Lũy...). Kết quả đầu tư <strong>không được bảo đảm</strong>.</p>'
+                    + '<p>Các mức tỷ suất trong bảng mô phỏng:</p>'
+                    + '<table><thead><tr><th>Kịch bản</th><th>Tỷ suất</th><th>Ý nghĩa</th></tr></thead>'
+                    + '<tbody>'
+                    + '<tr><td>Tỷ suất cao</td><td><strong>9%/năm</strong></td><td>Giai đoạn quỹ ưu tiên cổ phiếu</td></tr>'
+                    + '<tr><td>Tỷ suất thấp</td><td><strong>1.3%/năm</strong></td><td>Giai đoạn gần hưu — chuyển trái phiếu</td></tr>'
+                    + '</tbody></table>'
+                    + '<p style="margin-top:12px;font-size:12px;color:#c0392b;"><strong>Lưu ý:</strong> Giá trị tài khoản có thể tăng hoặc giảm tùy theo biến động thị trường. Con số 9%/1.3% chỉ mang tính tham khảo, không phải cam kết.</p>'
+            };
+
+            function openModal(type) {
+                content.innerHTML = MODAL_CONTENT[type] || '';
+                overlay.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                overlay.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+
+            var btnGuaranteed = document.getElementById('hthbc-info-guaranteed');
+            var btnVariable   = document.getElementById('hthbc-info-variable');
+
+            if (btnGuaranteed) {
+                btnGuaranteed.addEventListener('click', function () { openModal('guaranteed'); });
+            }
+            if (btnVariable) {
+                btnVariable.addEventListener('click', function () { openModal('variable'); });
+            }
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeModal);
+            }
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeModal();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeModal();
             });
         },
 
