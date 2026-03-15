@@ -3,7 +3,7 @@
  * Plugin Name: Hung Thinh Bar Chart - Xanh Phu Quy
  * Plugin URI:  https://techsharevn.com
  * Description: Biểu đồ cột tương tác + Kế hoạch tài chính của Quỹ Hưng Thịnh (Sản phẩm Xanh Phú Quý - Manulife). Powered by Techshare VN.
- * Version:     2.4.0
+ * Version:     2.5.0
  * Author:      Trần Vĩ Thành — Techshare VN
  * Author URI:  https://techsharevn.com
  * License:     GPL-2.0-or-later
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HTHBC_VERSION', '2.4.0' );
+define( 'HTHBC_VERSION', '2.5.0' );
 define( 'HTHBC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HTHBC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
