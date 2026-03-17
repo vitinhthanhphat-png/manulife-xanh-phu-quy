@@ -1,5 +1,5 @@
 /**
- * Hung Thinh Bar Chart v2.5.0 — Manulife Xanh Phu Quy
+ * Hung Thinh Bar Chart v2.5.3 — Manulife Xanh Phu Quy
  * Tab 1: Allocation Bar Chart
  * Tab 2: Financial Projection Engine
  */
@@ -251,8 +251,11 @@
         // Surrender charges (phí chấm dứt hợp đồng)
         SURRENDER_CHARGES: { 1: 0.75, 2: 0.75, 3: 0.50, 4: 0.20, 5: 0.10 }, // Year 6+: 0
 
-        FUND_MGMT_FEE: 0.025,    // 2.5%/year max
-        POLICY_MGMT_FEE: 564000, // ~47,000đ/month * 12 in VND
+        FUND_MGMT_FEE:            0.025, // 2.5%/year max (for equity-heavy funds)
+        POLICY_MGMT_FEE_BASE:     47000, // Đồng/tháng — mức 2026 (Nguồn: TnC 2026)
+        POLICY_MGMT_FEE_INCREASE: 2000,  // Tăng 2,000đ/tháng mỗi năm dương lịch
+        POLICY_MGMT_FEE_CAP:      70000, // Trần tối đa 70,000đ/tháng
+        CONTRACT_START_YEAR:      2026,   // Năm bắt đầu hợp đồng (mặc định)
 
         HIGH_RATE: 0.09,  // 9%/year
         LOW_RATE:  0.013, // 1.3%/year
@@ -267,6 +270,8 @@
         premium:       250000000,
         payYears:      10,
         withdrawalMode: false,
+        riskFeeMode:   false,
+        healthTier:    'basic',
         finChartHigh:  null,
         finChartLow:   null,
         lineChart:     null,
@@ -289,6 +294,9 @@
                 withdrawToggle:   document.getElementById('hthbc-withdrawal-toggle'),
                 withdrawInfo:     document.getElementById('hthbc-withdrawal-info'),
                 annualWithdrawal: document.getElementById('hthbc-annual-withdrawal'),
+                riskToggle:       document.getElementById('hthbc-risk-toggle'),
+                healthTierSelect: document.getElementById('hthbc-health-tier'),
+                healthTierWrapper:document.getElementById('hthbc-health-tier-wrapper'),
             };
         },
 
@@ -308,11 +316,66 @@
                     self.updateAll();
                 });
             }
+
+            // Use event delegation for risk controls (elements may be added after init)
+            document.addEventListener('change', function (e) {
+                if (e.target && e.target.id === 'hthbc-risk-toggle') {
+                    self.riskFeeMode = e.target.checked;
+                    var wrapper = document.getElementById('hthbc-health-tier-wrapper');
+                    if (wrapper) wrapper.style.display = e.target.checked ? 'block' : 'none';
+                    self.updateAll();
+                }
+                if (e.target && e.target.id === 'hthbc-health-tier') {
+                    self.healthTier = e.target.value;
+                    self.updateAll();
+                }
+            });
+
             // Smart Banner modal bindings
             self.bindSmartBannerModals();
         },
 
-        /* ── Core financial projection engine ─────────── */
+        /**
+         * Returns the annual policy management fee for a given contract year.
+         * Base: 47,000đ/month in 2026, increases by 2,000đ/month each calendar year.
+         * Capped at 70,000đ/month. Source: Manulife TnC 2026.
+         * @param {number} contractYear  1-based contract year (Year 1 = first year of policy)
+         * @returns {number} annual fee in VND
+         */
+        getPolicyMgmtFee: function(contractYear) {
+            var monthlyBase    = this.POLICY_MGMT_FEE_BASE;
+            var monthlyIncrease = this.POLICY_MGMT_FEE_INCREASE;
+            var monthlyCap     = this.POLICY_MGMT_FEE_CAP;
+            // Each contract year maps to a calendar year starting from 2026
+            var yearsElapsed   = contractYear - 1;
+            var monthly = Math.min(monthlyBase + yearsElapsed * monthlyIncrease, monthlyCap);
+            return monthly * 12;
+        },
+
+        /**
+         * Calculates estimated annual risk fee (Life + Health Rider)
+         * @param {number} age   Current age
+         * @param {string} tier  'none', 'basic', 'advanced', 'vip'
+         * @returns {number} estimated risk fee in VND
+         */
+        calculateAnnualRiskFee: function(age, tier) {
+            // Assume base life insurance risk fee at age 30 is 2,000,000 VND.
+            // Increases exponentially by 5% per year.
+            var baseLifeFee = 2000000;
+            var lifeFee = baseLifeFee * Math.pow(1.05, age - 30);
+            
+            var healthFee = 0;
+            // Ước tính phí sức khỏe dựa trên khảo sát thị trường bảo hiểm VN 2024-2025
+            // (tham khảo Manulife, Prudential, AIA). KHÔNG phải biểu phí chính thức của bất kỳ công ty nào.
+            switch(tier) {
+                case 'basic':    healthFee = 3000000; break;
+                case 'advanced': healthFee = 5500000; break;
+                case 'vip':      healthFee = 9000000; break;
+                case 'none': default: healthFee = 0; break;
+            }
+            return lifeFee + healthFee;
+        },
+
         /**
          * Projects account value at end of given year.
          * @param {number} premium     Annual premium in VND
@@ -340,8 +403,15 @@
                 // Grow both at net rate
                 accountValue = accountValue * (1 + netRate);
                 loyaltyAccum = loyaltyAccum * (1 + netRate);
-                // Deduct annual policy management fee
-                accountValue -= self.POLICY_MGMT_FEE;
+                // Deduct annual policy management fee (increases each year per TnC)
+                accountValue -= self.getPolicyMgmtFee(yr);
+                
+                // Deduct risk fee if enabled
+                if (self.riskFeeMode) {
+                    var currentAge = parseInt(document.getElementById('hthbc-age-number').value, 10) + yr - 1;
+                    accountValue -= self.calculateAnnualRiskFee(currentAge, self.healthTier);
+                }
+                
                 accountValue = Math.max(0, accountValue);
             }
 
@@ -374,7 +444,13 @@
                 }
                 accountValue = accountValue * (1 + netRate);
                 loyaltyAccum = loyaltyAccum * (1 + netRate);
-                accountValue -= self.POLICY_MGMT_FEE;
+                accountValue -= self.getPolicyMgmtFee(yr);
+
+                // Deduct risk fee if enabled
+                if (self.riskFeeMode) {
+                    var currentAge = parseInt(document.getElementById('hthbc-age-number').value, 10) + yr - 1;
+                    accountValue -= self.calculateAnnualRiskFee(currentAge, self.healthTier);
+                }
 
                 // Annual withdrawal from Year 11 onwards
                 if (yr >= 11) {
@@ -416,6 +492,13 @@
         /* ── Update all outputs ───────────────────────── */
         updateAll: function () {
             var self = this;
+
+            // Sync state from DOM (in case elements were added after init)
+            var riskEl  = document.getElementById('hthbc-risk-toggle');
+            var tierEl  = document.getElementById('hthbc-health-tier');
+            if (riskEl)  self.riskFeeMode = riskEl.checked;
+            if (tierEl)  self.healthTier  = tierEl.value;
+
             var p    = self.premium;
             var py   = self.payYears;
             var yrs  = self.PROJECTION_YEARS;
@@ -429,6 +512,26 @@
             // Year 20 Package Card
             self.updateYear20Package();
 
+            // Risk fee impact indicator
+            var riskImpactEl    = document.getElementById('hthbc-risk-impact');
+            var riskImpactValEl = document.getElementById('hthbc-risk-impact-val');
+            if (riskImpactEl) {
+                if (self.riskFeeMode) {
+                    // Compute total risk fee over 20 years at HIGH rate (illustrative)
+                    var age0 = parseInt((document.getElementById('hthbc-age-number') || {value: '30'}).value, 10);
+                    var totalRiskFee20 = 0;
+                    for (var feeYr = 1; feeYr <= 20; feeYr++) {
+                        totalRiskFee20 += self.calculateAnnualRiskFee(age0 + feeYr - 1, self.healthTier);
+                    }
+                    if (riskImpactValEl) riskImpactValEl.textContent = self.fmtVND(totalRiskFee20);
+                    riskImpactEl.style.display = 'block';
+                    console.log('[RiskFee] ON | tier=' + self.healthTier + ' | age=' + age0 + ' | total20yr=' + Math.round(totalRiskFee20/1e6) + 'tr');
+                } else {
+                    riskImpactEl.style.display = 'none';
+                    console.log('[RiskFee] OFF');
+                }
+            }
+
             // Update withdrawal info banner
             if (self.el.withdrawInfo) {
                 if (wm) {
@@ -441,18 +544,30 @@
                     self.el.withdrawInfo.style.display = 'none';
                 }
             }
+            
+            // Check if depleted early due to risk fee to trigger disclaimer warning
+            var showDepletionWarning = false;
 
             // Build projection data arrays
             var labelsArr = [], highArr = [], lowArr = [];
             for (var yr = 1; yr <= yrs; yr++) {
                 labelsArr.push('Năm ' + yr);
+                
+                var highVal, lowVal;
                 if (wm) {
-                    highArr.push(Math.round(self.projectWithWithdrawal(p, py, self.HIGH_RATE, yr) / 1e6));
-                    lowArr.push(Math.round(self.projectWithWithdrawal(p, py, self.LOW_RATE,  yr) / 1e6));
+                    highVal = self.projectWithWithdrawal(p, py, self.HIGH_RATE, yr);
+                    lowVal = self.projectWithWithdrawal(p, py, self.LOW_RATE,  yr);
                 } else {
-                    highArr.push(Math.round(self.project(p, py, self.HIGH_RATE, yr) / 1e6));
-                    lowArr.push(Math.round(self.project(p, py, self.LOW_RATE,  yr) / 1e6));
+                    highVal = self.project(p, py, self.HIGH_RATE, yr);
+                    lowVal = self.project(p, py, self.LOW_RATE,  yr);
                 }
+                
+                if (self.riskFeeMode && (lowVal <= 0 || highVal <= 0)) {
+                    showDepletionWarning = true;
+                }
+                
+                highArr.push(Math.round(highVal / 1e6));
+                lowArr.push(Math.round(lowVal / 1e6));
             }
 
             // Update or create Line Chart
@@ -761,10 +876,10 @@
                 var isMilestone = milestones[yr] ? ' hthbc-row-milestone' : '';
                 var bonusNote   = yr === 20 ? ' 🎁' : '';
                 var wdNote      = (withdrawalMode && yr >= 11) ? ' 💸' : '';
-                // Helper: display value — show 'Hết quỹ' when 0 in withdrawal mode
-                var fmtCell = function (v, isWithdrawal) {
-                    if (v <= 0 && isWithdrawal) {
-                        return '<span class="hthbc-td-depleted" title="Quỹ cạn do rút 10%/năm + lãi thấp hơn phí quản lý">Hết quỹ</span>';
+                // Helper: display value — show 'Hết quỹ' when 0 in withdrawal mode or risk fee mode
+                var fmtCell = function (v, isWithdrawal, isRiskEnabled) {
+                    if (v <= 0 && (isWithdrawal || isRiskEnabled)) {
+                        return '<span class="hthbc-td-depleted" title="Quỹ cạn do khấu trừ phí rủi ro/rút tiền + lãi thấp hơn phí quản lý">Hết quỹ</span>';
                     }
                     return self.fmtVND(v);
                 };
@@ -772,10 +887,10 @@
                 rows += '<tr class="' + isMilestone + '">'
                     + '<td>' + yr + bonusNote + wdNote + '</td>'
                     + '<td>' + self.fmtVND(totalPaid) + '</td>'
-                    + '<td class="hthbc-td-high">' + fmtCell(highVal, withdrawalMode) + '</td>'
-                    + '<td class="hthbc-td-low">'  + fmtCell(lowVal,  withdrawalMode) + '</td>'
+                    + '<td class="hthbc-td-high">' + fmtCell(highVal, withdrawalMode, self.riskFeeMode) + '</td>'
+                    + '<td class="hthbc-td-low">'  + fmtCell(lowVal,  withdrawalMode, self.riskFeeMode) + '</td>'
                     + '<td>' + chargeStr + '</td>'
-                    + '<td class="hthbc-td-high">' + fmtCell(withdrawHigh, withdrawalMode) + '</td>'
+                    + '<td class="hthbc-td-high">' + fmtCell(withdrawHigh, withdrawalMode, self.riskFeeMode) + '</td>'
                     + '</tr>';
             }
 

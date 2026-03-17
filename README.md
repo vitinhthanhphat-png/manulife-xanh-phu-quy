@@ -76,6 +76,24 @@ Tỷ suất đầu tư giả định (9%/năm và 1.3%/năm) không được Man
 
 ## 🔄 Theo dõi thay đổi (Changelog)
 
+### v2.5.3: Fee Engine Accuracy & Fee Breakdown UI (March 2026)
+- **[Nâng cấp engine]** Phí Quản Lý Hợp Đồng chuyển từ hằng số cố định sang hàm động `getPolicyMgmtFee(năm)`: bắt đầu 47,000đ/tháng (2026), tăng +2,000đ/tháng mỗi năm, trần 70,000đ/tháng — trích từ **Tài Liệu Minh Hoạ Bán Hàng** của Manulife.
+- **[Tính năng mới]** **Section Cấu Trúc Phí** (Section 4): hiển thị đầy đủ 5 loại phí (Phí Ban Đầu, QLHĐ, Chấm Dứt, QL Quỹ, Chuyển Đổi) dưới dạng 4 thẻ có màu sắc, số liệu theo năm, highlight đỏ/vàng/xanh.
+- **[Cải tiến]** "Tổng thực nhận về" — cập nhật subtitle card Năm 20 và note cuối để rõ ràng đây là tiền nhận lại, không phải cộng thêm ngoài vốn đã đóng.
+- **[Cải tiến]** Thêm indicator ⚡ hiển thị tổng phí rủi ro ước tính trừ trong 20 năm ngay trong panel Risk Fee, kèm **expandable giải thích** tại sao kịch bản 1.3% có thể không đổi khi toggle phí rủi ro.
+- **[Cải tiến]** Chú thích nguồn gốc các mức phí sức khỏe ước tính (khảo sát thị trường VN 2024–2025) trực tiếp trên UI.
+- **[Cải tiến]** Console log diagnostic giúp debug state phí rủi ro trong DevTools.
+
+### v2.5.2: Bugfix — Risk Fee Toggle (March 2026)
+- **[Sửa lỗi]** Bật/tắt toggle "Tính ước lượng Chi phí rủi ro & y tế" không ảnh hưởng đến con số khi đã bật "Mô phỏng rút tiền". Nguyên nhân: event binding bị fail silently và state không được sync lại từ DOM. Đã sửa bằng event delegation + DOM state sync mỗi lần `updateAll()`.
+- **[Cải tiến]** Label "Tổng ước tính" đổi thành "Tổng thực nhận về" + cập nhật subtitle và note để tránh hiểu nhầm đây là tiền cộng thêm ngoài vốn đã đóng.
+- **[Cải tiến]** Ghi rõ nguồn gốc 3 mức phí sức khỏe ước tính: khảo sát thị trường VN 2024–2025, không phải biểu phí chính thức Manulife.
+
+### v2.5.1: Risk Fee & Health Riders Simulation (March 2026)
+- **[Tính năng mới]** **Mô phỏng Phí Rủi Ro/Y tế**: Bổ sung tuỳ chọn "Tính ước lượng Chi phí rủi ro & y tế" cùng menu thả xuống để chọn "Gói sức khỏe đính kèm".
+- **[Nâng cấp thuật toán]** Hệ thống dự phóng tài chính tự động tăng phí sinh mạng theo tuổi của khách hàng (hàm mũ 5% mỗi năm) cộng với phí cố định của thẻ sức khỏe đã chọn. Trừ các khoản hụt này mỗi đầu năm để thể hiện đúng bản chất sản phẩm liên kết đơn vị.
+- **[Cảnh báo "Hết quỹ"]** Giao diện bảng lịch sử sẽ cảnh báo đỏ cực mạnh và hiện chữ "Hết quỹ" nếu GTTK về 0 do rút tiền hoặc bị trừ phí rủi ro lúc về già.
+
 ### v2.5.0: Year 20 Package Card & UI Refinements (March 2026)
 - **[Tính năng mới]** **Năm 20 Package Card** — Thay thế widget Thưởng Tri Ân đơn lẻ bằng card tổng hợp hiển thị: (1) Tổng đã đóng làm vốn tham chiếu, (2) GTTK đầu tư 2 kịch bản 9%/1.3%, (3) Thưởng Tri Ân cam kết cộng thêm (với prefix "+"), (4) Tổng ước tính và % ROI so với vốn → Giải quyết nhầm lẫn khi khách nghĩ chỉ nhận 62 tr tại Năm 20.
 - **[Tính năng mới]** Khi bật toggle rút tiền: hiện badge vàng "Chế độ rút 10%/năm", dòng "Đã rút về (Năm 11–20)", GTTK giảm tương ứng — trong khi Thưởng Tri Ân **không thay đổi** (cam kết độc lập), được ghi chú rõ ràng.

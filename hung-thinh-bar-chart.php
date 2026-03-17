@@ -3,7 +3,7 @@
  * Plugin Name: Hung Thinh Bar Chart - Xanh Phu Quy
  * Plugin URI:  https://techsharevn.com
  * Description: Biểu đồ cột tương tác + Kế hoạch tài chính của Quỹ Hưng Thịnh (Sản phẩm Xanh Phú Quý - Manulife). Powered by Techshare VN.
- * Version:     2.5.0
+ * Version:     2.5.3
  * Author:      Trần Vĩ Thành — Techshare VN
  * Author URI:  https://techsharevn.com
  * License:     GPL-2.0-or-later
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HTHBC_VERSION', '2.5.0' );
+define( 'HTHBC_VERSION', '2.5.3' );
 define( 'HTHBC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HTHBC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -656,6 +656,52 @@ function hthbc_render_shortcode( $atts ) {
 						</select>
 					</div>
 				</div>
+
+				<!-- Risk Fee Settings Panel -->
+				<div class="hthbc-risk-settings" style="background:rgba(192,57,43,.05);border:1px solid rgba(192,57,43,.2);border-radius:8px;padding:15px;margin-bottom:20px;">
+					<div class="hthbc-field-group" style="margin-bottom:0;">
+						<label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#c0392b;font-weight:600;">
+							<input type="checkbox" id="hthbc-risk-toggle">
+							&#9888;&#65039; Tính ước lượng Chi phí rủi ro &amp; y tế
+						</label>
+						<p style="font-size:11px;margin:6px 0 0;color:#6b7280;">Bao gồm phí Sinh mạng (tăng theo tuổi) &amp; Chăm sóc sức khỏe mỗi năm.</p>
+					</div>
+					<div id="hthbc-health-tier-wrapper" style="display:none;margin-top:12px;">
+						<label class="hthbc-label" for="hthbc-health-tier">Gói Chăm sóc sức khỏe đính kèm (ước tính):</label>
+						<select id="hthbc-health-tier" class="hthbc-select">
+							<option value="none">Không có (Chỉ tính phí sinh mạng)</option>
+							<option value="basic" selected>Cơ bản (~3 triệu/năm)</option>
+							<option value="advanced">Nâng cao (~5.5 triệu/năm)</option>
+							<option value="vip">Cao cấp (~9 triệu/năm)</option>
+						</select>
+						<p style="font-size:11px;margin:8px 0 0;color:#c0392b;line-height:1.5;">
+							<strong>Nguồn số liệu:</strong> Mức phí ước lượng dựa trên khảo sát rộng rãi thị trường bảo hiểm sức khỏe Việt Nam năm 2024–2025
+							(nhiều công ty như Manulife, Prudential, AIA...). <em>Không phải mức chính thức của Manulife — chỉ dùng để minh hoầ nhận thức về tác động của chi phí rủi ro lên tài khoản.</em>
+						</p>
+					</div>
+				<!-- Risk Fee Impact Indicator -->
+				<div id="hthbc-risk-impact" style="display:none;margin-top:10px;padding:8px 12px;background:rgba(192,57,43,.08);border-radius:6px;font-size:12px;color:#c0392b;line-height:1.5;">
+					⚡ Ước tính phí rủi ro trừ: <strong id="hthbc-risk-impact-val">—</strong> trong 20 năm hợp đồng
+					<span style="color:#6b7280;font-size:11px;"> (đây là lý do GTTK thực nhận về thấp hơn)</span>
+
+					<details style="margin-top:8px;">
+						<summary style="cursor:pointer;font-size:11px;color:#6b7280;list-style:none;display:flex;align-items:center;gap:4px;">
+							<span>❓ Tại sao kịch bản <strong>1.3%</strong> không thay đổi khi bật/tắt phí rủi ro?</span>
+						</summary>
+						<div style="margin-top:8px;padding:10px 12px;background:#fff;border-radius:6px;border:1px solid rgba(192,57,43,.15);font-size:11.5px;color:#374151;line-height:1.7;">
+							<p style="margin:0 0 6px;"><strong>Giải thích kỹ thuật:</strong></p>
+							<ul style="margin:0;padding-left:18px;">
+								<li>Ở lãi suất <strong>1.3%/năm</strong>, phí quản lý quỹ đã là <strong>2.5%/năm</strong>, nên <em>tỷ suất thực tế = 1.3% − 2.5% = <strong style="color:#c0392b;">−1.2%</strong></em> (âm mỗi năm).</li>
+								<li>Cộng thêm rút <strong>10%/năm từ Năm 11</strong> (nếu đang bật mô phỏng rút), tài khoản bị cạn dần rất nhanh.</li>
+								<li>Phí rủi ro <strong>~5–8 triệu/năm</strong> quá nhỏ so với khoản rút <strong>~250 triệu/năm</strong> — cả hai kịch bản đều về cùng mức nền, nên con số hiển thị giống nhau.</li>
+								<li>Phí rủi ro <strong>VẪN ĐANG ĐƯỢC TRỪ</strong> — chỉ là không đủ lớn để thay đổi số hiển thị ở kịch bản tệ nhất.</li>
+							</ul>
+							<p style="margin:8px 0 0;font-size:11px;color:#6b7280;">💡 Thử tăng tuổi lên 50+ hoặc chọn gói Cao cấp để thấy phí rủi ro ảnh hưởng rõ hơn ở cả 2 kịch bản.</p>
+						</div>
+					</details>
+				</div>
+			</div>
+
 				<div class="hthbc-summary-cards">
 					<div class="hthbc-summary-card hthbc-card-green">
 						<div class="hthbc-summary-label">Tổng phí dự kiến đóng</div>
@@ -718,7 +764,7 @@ function hthbc_render_shortcode( $atts ) {
 					<span class="hthbc-y20-icon">🏆</span>
 					<div class="hthbc-y20-title-wrap">
 						<strong>Tổng lợi ích ước tính tại Năm 20</strong>
-						<p class="hthbc-y20-sub">Kết hợp GTTK đầu tư + Thưởng Tri Ân cam kết</p>
+						<p class="hthbc-y20-sub">Số tiền <u>thực nhận về</u> = GTTK đầu tư đã có trong tài khoản + Thưởng Tri Ân cam kết</p>
 					</div>
 					<span class="hthbc-y20-mode-badge hthbc-y20-hidden" id="hthbc-y20-mode-badge">📤 Chế độ rút 10%/năm</span>
 				</div>
@@ -752,7 +798,7 @@ function hthbc_render_shortcode( $atts ) {
 							<strong id="hthbc-y20-bonus">—</strong>
 						</div>
 						<div class="hthbc-y20-sc-total">
-							<span>🏆 Tổng ước tính</span>
+							<span>💰 Tổng thực nhận về</span>
 							<strong id="hthbc-y20-high-total">—</strong>
 						</div>
 						<div class="hthbc-y20-roi" id="hthbc-y20-high-roi">—</div>
@@ -770,7 +816,7 @@ function hthbc_render_shortcode( $atts ) {
 							<strong id="hthbc-y20-low-bonus">—</strong>
 						</div>
 						<div class="hthbc-y20-sc-total">
-							<span>🏆 Tổng ước tính</span>
+							<span>💰 Tổng thực nhận về</span>
 							<strong id="hthbc-y20-low-total">—</strong>
 						</div>
 						<div class="hthbc-y20-roi" id="hthbc-y20-low-roi">—</div>
@@ -780,8 +826,8 @@ function hthbc_render_shortcode( $atts ) {
 
 				<!-- Note cam kết -->
 				<div class="hthbc-y20-note">
-					🔒 <strong>Thưởng Tri Ân không thay đổi</strong> dù rút tiền hay không — đây là khoản cam kết độc lập.
-					Số 9%/1.3% chỉ mang tính minh họa, không phải cam kết của Manulife.
+					🔒 <strong>"Tổng thực nhận về"</strong> = số tiền trong tài khoản + Thưởng Tri Ân. <strong>Không phải cộng thêm ngoài khoản đã đóng.</strong>
+					Thưởng Tri Ân không thay đổi dù rút tiền hay không — đây là khoản cam kết độc lập. Số 9%/1.3% chỉ mang tính minh họa, không phải cam kết của Manulife.
 				</div>
 
 			</div><!-- /.hthbc-y20-package -->
@@ -956,6 +1002,111 @@ function hthbc_render_shortcode( $atts ) {
 				<p>⚖️ <em>Lưu ý: Kết quả đầu tư của các Quỹ Liên Kết Đơn Vị trong quá khứ chỉ nhằm mục đích tham khảo và không phản ánh kết quả hoạt động đầu tư trong tương lai của các Quỹ. Khách hàng được hưởng toàn bộ kết quả đầu tư và chịu mọi rủi ro trong đầu tư.</em></p>
 			</div>
 		</div>
+
+		<!-- ════════════════════════════════════════════════
+		     SECTION 4: Cấu Trúc Phí Sản Phẩm
+		════════════════════════════════════════════════ -->
+		<div class="hthbc-fee-section">
+			<div class="hthbc-fee-header">
+				<h3 class="hthbc-fee-title">📋 Cấu Trúc Phí Sản Phẩm Xanh Phú Quý</h3>
+				<p class="hthbc-fee-subtitle">Toàn bộ các loại phí áp dụng cho hợp đồng — trích từ Quy Tắc & Điều Khoản chính thức của Manulife</p>
+			</div>
+
+			<div class="hthbc-fee-grid">
+
+				<!-- Phí 1: Ban Đầu -->
+				<div class="hthbc-fee-card hthbc-fee-initial">
+					<div class="hthbc-fee-card-header">
+						<span class="hthbc-fee-icon">🏷️</span>
+						<div>
+							<div class="hthbc-fee-name">Phí Ban Đầu</div>
+							<div class="hthbc-fee-desc">Khấu trừ trước khi đem tiền đi đầu tư</div>
+						</div>
+					</div>
+					<table class="hthbc-fee-table">
+						<thead><tr><th>Năm hợp đồng</th><th>Tỷ lệ khấu trừ</th><th>Tiền được đầu tư</th></tr></thead>
+						<tbody>
+							<tr><td>Năm 1</td><td class="hthbc-fee-hl-red">30%</td><td>70% phí đóng</td></tr>
+							<tr><td>Năm 2</td><td class="hthbc-fee-hl-amber">20%</td><td>80% phí đóng</td></tr>
+							<tr><td>Năm 3 – 5</td><td class="hthbc-fee-hl-amber">10%</td><td>90% phí đóng</td></tr>
+							<tr class="hthbc-fee-row-good"><td>Từ Năm 6+</td><td class="hthbc-fee-hl-green"><strong>0%</strong></td><td><strong>100%</strong> phí đóng</td></tr>
+						</tbody>
+					</table>
+					<p class="hthbc-fee-note">💡 Khoản bị khấu trừ 30 năm đầu được tích lũy lại → trả về dưới dạng <strong>Thưởng Tri Ân</strong> tại Năm 20 với lãi suất cam kết.</p>
+				</div>
+
+				<!-- Phí 2: Quản Lý HĐ -->
+				<div class="hthbc-fee-card hthbc-fee-mgmt">
+					<div class="hthbc-fee-card-header">
+						<span class="hthbc-fee-icon">📄</span>
+						<div>
+							<div class="hthbc-fee-name">Phí Quản Lý Hợp Đồng</div>
+							<div class="hthbc-fee-desc">Trừ cố định hàng tháng, tăng dần theo năm</div>
+						</div>
+					</div>
+					<table class="hthbc-fee-table">
+						<thead><tr><th>Năm hợp đồng</th><th>Phí/tháng</th><th>Phí/năm</th></tr></thead>
+						<tbody>
+							<tr><td>Năm 1 (2026)</td><td>47,000đ</td><td>564,000đ</td></tr>
+							<tr><td>Năm 2 (2027)</td><td>49,000đ</td><td>588,000đ</td></tr>
+							<tr><td>Năm 5 (2030)</td><td>55,000đ</td><td>660,000đ</td></tr>
+							<tr><td>Năm 10 (2035)</td><td>65,000đ</td><td>780,000đ</td></tr>
+							<tr class="hthbc-fee-row-cap"><td>Năm 12+ (2038+)</td><td><strong>70,000đ</strong> 🔒 Trần</td><td><strong>840,000đ</strong></td></tr>
+						</tbody>
+					</table>
+					<p class="hthbc-fee-note">⚙️ Số liệu trích từ <strong>Tài Liệu Minh Hoạ Bán Hàng</strong> của Manulife — phí tự động tăng +2,000đ/tháng mỗi năm dương lịch, tối đa 70,000đ/tháng.</p>
+				</div>
+
+				<!-- Phí 3: Chấm Dứt -->
+				<div class="hthbc-fee-card hthbc-fee-surrender">
+					<div class="hthbc-fee-card-header">
+						<span class="hthbc-fee-icon">🚪</span>
+						<div>
+							<div class="hthbc-fee-name">Phí Chấm Dứt Trước Hạn</div>
+							<div class="hthbc-fee-desc">Phạt hủy hợp đồng sớm (% phí cơ bản quy năm)</div>
+						</div>
+					</div>
+					<table class="hthbc-fee-table">
+						<thead><tr><th>Năm hủy</th><th>Phạt</th><th>Lời khuyên</th></tr></thead>
+						<tbody>
+							<tr><td>Năm 1 – 2</td><td class="hthbc-fee-hl-red"><strong>75%</strong></td><td>❌ Tránh tuyệt đối</td></tr>
+							<tr><td>Năm 3</td><td class="hthbc-fee-hl-red">50%</td><td>⚠️ Tổn thất lớn</td></tr>
+							<tr><td>Năm 4</td><td class="hthbc-fee-hl-amber">20%</td><td>⚠️ Cân nhắc kỹ</td></tr>
+							<tr><td>Năm 5</td><td class="hthbc-fee-hl-amber">10%</td><td>🔶 Tổn thất nhỏ</td></tr>
+							<tr class="hthbc-fee-row-good"><td>Từ Năm 6+</td><td class="hthbc-fee-hl-green"><strong>0%</strong></td><td>✅ Rút tự do</td></tr>
+						</tbody>
+					</table>
+				</div>
+
+				<!-- Phí 4 & 5: Quản Lý Quỹ + Chuyển Đổi -->
+				<div class="hthbc-fee-card hthbc-fee-fund">
+					<div class="hthbc-fee-card-header">
+						<span class="hthbc-fee-icon">📈</span>
+						<div>
+							<div class="hthbc-fee-name">Phí Quản Lý Quỹ & Chuyển Đổi</div>
+							<div class="hthbc-fee-desc">Khấu trừ trước khi công bố giá đơn vị quỹ</div>
+						</div>
+					</div>
+					<table class="hthbc-fee-table">
+						<thead><tr><th>Loại Quỹ</th><th>Phí tối đa/năm</th></tr></thead>
+						<tbody>
+							<tr><td>≥70% Cổ phiếu (Quỹ HT 2045)</td><td class="hthbc-fee-hl-red"><strong>2.5%/năm</strong></td></tr>
+							<tr><td>≥70% Trái phiếu</td><td class="hthbc-fee-hl-amber">1.5%/năm</td></tr>
+							<tr><td>≥70% Tiền gửi / Thu nhập cố định</td><td class="hthbc-fee-hl-green">1.0%/năm</td></tr>
+						</tbody>
+					</table>
+					<div class="hthbc-fee-switch-note">
+						<span class="hthbc-fee-switch-badge">🔄 Phí Chuyển Đổi Quỹ</span>
+						<strong>0 đồng</strong> — Miễn phí hoàn toàn suốt thời hạn hợp đồng
+					</div>
+				</div>
+
+			</div><!-- /.hthbc-fee-grid -->
+
+			<div class="hthbc-fee-disclaimer">
+				<p>📌 <em>Toàn bộ thông tin phí trích từ <strong>Quy Tắc & Điều Khoản chính thức Manulife Xanh Phú Quý (2026)</strong>. Phí có thể thay đổi theo thông báo của Manulife, đề nghị xác nhận lại với chuyên gia tư vấn trước khi ký hợp đồng.</em></p>
+			</div>
+		</div><!-- /.hthbc-fee-section -->
 
 	</div>
 	<?php
