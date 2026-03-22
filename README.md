@@ -76,6 +76,10 @@ Tỷ suất đầu tư giả định (9%/năm và 1.3%/năm) không được Man
 
 ## 🔄 Theo dõi thay đổi (Changelog)
 
+### v2.5.4: Admin Settings UI Polish (March 2026)
+- **[Cải tiến]** Cân đối nút "Xóa Logo" và "Xóa ảnh" — bọc trong flex container, hiển thị cùng dòng với nút Upload cho gọn gàng hơn.
+- **[Cải tiến]** Xóa box chú giải bảng (GTTK 9%, 1.3%, Có thể rút, Hết quỹ) khỏi tab "Thông tin Tác Giả" — không liên quan đến nội dung tác giả.
+
 ### v2.5.3: Fee Engine Accuracy & Fee Breakdown UI (March 2026)
 - **[Nâng cấp engine]** Phí Quản Lý Hợp Đồng chuyển từ hằng số cố định sang hàm động `getPolicyMgmtFee(năm)`: bắt đầu 47,000đ/tháng (2026), tăng +2,000đ/tháng mỗi năm, trần 70,000đ/tháng — trích từ **Tài Liệu Minh Hoạ Bán Hàng** của Manulife.
 - **[Tính năng mới]** **Section Cấu Trúc Phí** (Section 4): hiển thị đầy đủ 5 loại phí (Phí Ban Đầu, QLHĐ, Chấm Dứt, QL Quỹ, Chuyển Đổi) dưới dạng 4 thẻ có màu sắc, số liệu theo năm, highlight đỏ/vàng/xanh.

@@ -3,7 +3,7 @@
  * Plugin Name: Hung Thinh Bar Chart - Xanh Phu Quy
  * Plugin URI:  https://techsharevn.com
  * Description: Biểu đồ cột tương tác + Kế hoạch tài chính của Quỹ Hưng Thịnh (Sản phẩm Xanh Phú Quý - Manulife). Powered by Techshare VN.
- * Version:     2.5.3
+ * Version:     2.5.4
  * Author:      Trần Vĩ Thành — Techshare VN
  * Author URI:  https://techsharevn.com
  * License:     GPL-2.0-or-later
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HTHBC_VERSION', '2.5.3' );
+define( 'HTHBC_VERSION', '2.5.4' );
 define( 'HTHBC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HTHBC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -214,12 +214,14 @@ function hthbc_settings_page() {
 							</div>
 							<input type="hidden" id="hthbc_expert_logo" name="hthbc_expert_logo"
 									value="<?php echo esc_url( $logo ); ?>">
-							<button type="button" class="button" id="hthbc-upload-logo" style="margin-top:8px;">
-								🖼️ Upload Logo
-							</button>
-							<?php if ( $logo ) : ?>
-								<button type="button" class="button hthbc-remove-logo">✕ Xóa Logo</button>
-							<?php endif; ?>
+							<div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+								<button type="button" class="button" id="hthbc-upload-logo">
+									🖼️ Upload Logo
+								</button>
+								<?php if ( $logo ) : ?>
+									<button type="button" class="button hthbc-remove-logo">✕ Xóa Logo</button>
+								<?php endif; ?>
+							</div>
 							<p class="description">Khuyến nghị: PNG nền trong, chiều cao tối đa 60px. VD: logo Manulife, logo đại lý.</p>
 						</td>
 					</tr>
@@ -239,12 +241,14 @@ function hthbc_settings_page() {
 							</div>
 							<input type="hidden" id="hthbc_expert_avatar" name="hthbc_expert_avatar"
 									value="<?php echo esc_url( $avatar ); ?>">
-							<button type="button" class="button" id="hthbc-upload-avatar">
-								📷 Chọn ảnh
-							</button>
-							<?php if ( $avatar ) : ?>
-								<button type="button" class="button hthbc-remove-avatar">✕ Xóa ảnh</button>
-							<?php endif; ?>
+							<div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+								<button type="button" class="button" id="hthbc-upload-avatar">
+									📷 Chọn ảnh
+								</button>
+								<?php if ( $avatar ) : ?>
+									<button type="button" class="button hthbc-remove-avatar">✕ Xóa ảnh</button>
+								<?php endif; ?>
+							</div>
 							<p class="description">Tỷ lệ khuyến nghị: 1:1 (hình vuông), tối thiểu 200×200px</p>
 						</td>
 					</tr>
@@ -345,24 +349,7 @@ function hthbc_settings_page() {
 						</tr>
 					</table>
 				</div>
-<div class="hthbc-table-legend">
-<div class="hthbc-tl-item">
-<span class="hthbc-tl-badge hthbc-tl-green">GTTK (Tỷ suất 9%)</span>
-<span class="hthbc-tl-desc">Giá trị tích lũy dự kiến theo kịch bản tỷ suất đầu tư cao (9%/năm)</span>
-</div>
-<div class="hthbc-tl-item">
-<span class="hthbc-tl-badge hthbc-tl-amber">GTTK (Tỷ suất 1.3%)</span>
-<span class="hthbc-tl-desc">Giá trị tích lũy dự kiến theo kịch bản tỷ suất đầu tư thấp (1.3%/năm)</span>
-</div>
-<div class="hthbc-tl-item">
-<span class="hthbc-tl-badge hthbc-tl-blue">Có thể rút (9%)</span>
-<span class="hthbc-tl-desc">Số tiền thực tế rút được sau khi trừ phí chấm dứt hợp đồng (kịch bản 9%)</span>
-</div>
-<div class="hthbc-tl-item">
-<span class="hthbc-tl-badge hthbc-tl-red">Hết quỹ</span>
-<span class="hthbc-tl-desc">Tài khoản đã cạn kiệt  xảy ra khi rút 10%/năm kết hợp lãi suất thấp hơn phí quản lý quỹ (2.5%/năm)</span>
-</div>
-</div>
+
 			</div>
 
 			<div class="hthbc-shortcode-box">
